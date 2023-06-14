@@ -5,7 +5,7 @@ Makie.inline!(false)
 
 function MakeFigure() # Main function
 
-    printfig = true
+    printfig = false
 
     # Read data into a dataframe
     df_Condie10  = reverse(CSV.read("data/CrustGrowthCondieAlster2010.csv", DataFrame))
@@ -39,7 +39,7 @@ function MakeFigure() # Main function
     f[1, 2] = Legend(f, ax, "Legend", framevisible = false)
     # Display figure
     if printfig
-        save("figures/ContinentalCrust.png")
+        save("figures/ContinentalCrust.png", f, px_per_unit = 300)
     else
         DataInspector(f)
         display(f)
