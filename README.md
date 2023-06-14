@@ -1,1 +1,3 @@
 # BoronModelling
+
+![](./figures/ContinentalCrust.png)
