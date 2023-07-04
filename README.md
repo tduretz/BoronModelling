@@ -5,6 +5,10 @@
 4. Activate the environement: type `activate .`
 5. Install all necessary dependencies: type `instantiate`
 
+# Attempt to reproduce Lemarchand et al., 2002
+
+![](./figures/Lemarchand02.png)
+
 # Continental crust volume evolution
 
 ![](./figures/ContinentalCrust.png)
