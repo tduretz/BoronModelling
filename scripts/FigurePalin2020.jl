@@ -39,7 +39,7 @@ function MakeFigure() # Main function
     f[1, 2] = Legend(f, ax, "Legend", framevisible = false)
     # Display figure
     if printfig
-        save("figures/ContinentalCrust.png", f, px_per_unit = 300)
+        save("figures/ContinentalCrustPalin20.png", f, px_per_unit = 300)
     else
         DataInspector(f)
         display(f)
