@@ -8,16 +8,13 @@ function MakeFigure() # Main function
     printfig = false
 
     # Read data into a dataframe
-    df_OceanCrust = (CSV.read("data/OceanicProductionLemarchand02.csv",DataFrame)); df_OceanCrust[:,1] .-= 140.0; df_OceanCrust[:,1] .= reverse(df_OceanCrust[:,1])
-    df_CrustSedim = (CSV.read("data/CrustalSedFluxLemarchand02.csv",   DataFrame)); df_CrustSedim[:,1] .-= 140.0; df_CrustSedim[:,1] .= reverse(df_CrustSedim[:,1])
-    df_Carbonates = (CSV.read("data/CarbonatesLemarchand02.csv",       DataFrame)); df_Carbonates[:,1] .-= 140.0; df_Carbonates[:,1] .= reverse(df_Carbonates[:,1])
-    df_Runoff     = (CSV.read("data/RunoffLemarchand02.csv",           DataFrame)); df_Runoff[:,1]     .-= 140.0; df_Runoff[:,1]     .= reverse(df_Runoff[:,1])
+    df_OceanCrust = (CSV.read("data/OceanicProductionLemarchand02.csv",DataFrame));     df_OceanCrust[:,1] .*= -1. 
+    df_CrustSedim = (CSV.read("data/CrustalSedFluxLemarchand02.csv",   DataFrame));     df_CrustSedim[:,1] .*= -1. 
+    df_Carbonates = (CSV.read("data/CarbonatesLemarchand02.csv",       DataFrame));     df_Carbonates[:,1] .*= -1. 
+    df_Runoff     = (CSV.read("data/RunoffLemarchand02.csv",           DataFrame));     df_Runoff[:,1]     .*= -1. 
    
-    @show df_OceanCrust[1,1]
-    @show df_OceanCrust[end,1]
-
     # Time
-    t = collect(LinRange(-140., 0.,  100))
+    t = collect(LinRange(-140., 0.,  2000))
     t_years   = t.*1e6 
 
     # # Interpolate data on regular grid
@@ -34,20 +31,25 @@ function MakeFigure() # Main function
     # Ocean crust: 1) alteration of oceanic crust, 2) hydrothermal input 3) accretionary prisms, see Lemarchand et al., (2002)
     # Outflux
     qAlterOcean     = OceanCrust.*27*1e10 # g Boron/y
-    qCarbonates     = Carbonates.*6*1e10  # g Boron/y
+    qCarbonates     = Carbonates.* 6*1e10 # g Boron/y
     qCrustSedim     = CrustSedim.*13*1e10 # g Boron/y 
     # Influx
-    qHydroThermal   = OceanCrust.*4*1e10  # g Boron/y
-    qAccrePrism     = OceanCrust.*2*1e10  # g Boron/y
-    qRunOff         = Runoff.*38*1e10     # g Boron/y
+    qHydroThermal   = OceanCrust.* 4*1e10 # g Boron/y
+    qAccrePrism     = OceanCrust.* 2*1e10 # g Boron/y
+    qRunOff         = Runoff.*    38*1e10 # g Boron/y
 
     # Initial condition
     Bref = 1.39e24                 # g - modulates the amplitude of the signal, not the shape
-    B0   = 0.5*Bref/1e6            # ppm -> g
+    B0   = 9.0*Bref/1e6           # ppm -> g
     Δt   = (t_years[2]-t_years[1]) # years
     nt   = length(t)
     B    = B0 * ones(nt)           # ppm initial boron concentration
 
+    # # Smooth
+    # for _=1:20000
+    #     qAlterOcean[2:end-1] .+= 90000000*(qAlterOcean[1:end-2] .+ qAlterOcean[3:end] .- 2*qAlterOcean[2:end-1]) ./ Δt^2
+    # end
+    
     # Integrate
     for it=2:nt
         ∑sources = (qHydroThermal[it] + qAccrePrism[it] + qRunOff[it])      # g/year # Lemarchand et al., 2002
@@ -56,11 +58,12 @@ function MakeFigure() # Main function
     end
 
     # Boron balance
-    ΔB  = (qHydroThermal + qAccrePrism + qRunOff) - (qAlterOcean + qCarbonates + qCrustSedim)
-    ΔB  = diff(B, dims=1) ./ B0
+    @show size(qHydroThermal)
+    # ΔB  = (qHydroThermal .+ qAccrePrism .+ qRunOff) .- (qAlterOcean .+ qCarbonates .+ qCrustSedim)
+    ΔB  = diff(B, dims=1) ./B0 *100
 
     # Figure
-    f = Figure(resolution = (1000,1200), fontsize=25, aspect = 2.0)
+    f = Figure(resolution = (2000,1000), fontsize=25, aspect = 2.0)
     ax1 = Axis(f[1, 1], title = L"$$OceanCrust, Lemarchand et al., 2002", xlabel = L"$t$ [Ma]", ylabel = L"$$OceanCrust [%]",  xreversed = false, xgridvisible = false, ygridvisible = false)
     # Sampled data
     scatter!(ax1, df_OceanCrust[1:1:end,1], df_OceanCrust[1:1:end,2], marker=:circle, label="OceanCrust raw")
@@ -70,6 +73,10 @@ function MakeFigure() # Main function
     ax1 = Axis(f[2, 1], title = L"$$CrustSedim, Lemarchand et al., 2002", xlabel = L"$t$ [Ma]", ylabel = L"$$CrustSedim [%]",  xreversed = false, xgridvisible = false, ygridvisible = false)
     scatter!(ax1, df_CrustSedim[1:1:end,1], df_CrustSedim[1:1:end,2], marker=:circle, label="CrustSedim raw" )
     lines!(ax1, t, CrustSedim, label="CrustSedim" )
+
+    # ax1 = Axis(f[2, 1], title = L"$$qAlterOcean, Lemarchand et al., 2002", xlabel = L"$t$ [Ma]", ylabel = L"$$CrustSedim [%]",  xreversed = false, xgridvisible = false, ygridvisible = false)
+    # # scatter!(ax1, df_CrustSedim[1:1:end,1], df_CrustSedim[1:1:end,2], marker=:circle, label="CrustSedim raw" )
+    # lines!(ax1, t, qAlterOcean, label="qAlterOcean" )
 
     ax1 = Axis(f[1, 2], title = L"$$Carbonates, Lemarchand et al., 2002", xlabel = L"$t$ [Ma]", ylabel = L"$$Carbonates [%]",  xreversed = false, xgridvisible = false, ygridvisible = false)
     scatter!(ax1, df_Carbonates[1:1:end,1], df_Carbonates[1:1:end,2], marker=:circle, label="Carbonates raw" )
@@ -82,6 +89,7 @@ function MakeFigure() # Main function
     # f[3, 1] = Legend(f, ax1, "Legend", framevisible = false)
     ax2 = Axis(f[3, 1], title = L"$$Boron concentration", xlabel = L"$t$ [Ga]", ylabel = L"$$B [ppm]",  xreversed = false, xgridvisible = true, ygridvisible = false)
     lines!(ax2, t, B./(Bref/1e6), label="Boron concentration" )
+    ylims!(ax2, 3.0, 6.0)
 
     # f[3, 2] = Legend(f, ax1, "Legend", framevisible = false)
     ax2 = Axis(f[3, 2], title = L"$$Boron balance %", xlabel = L"$t$ [Ga]", ylabel = L"$$ ΔB [%]",  xreversed = false, xgridvisible = true, ygridvisible = false)
