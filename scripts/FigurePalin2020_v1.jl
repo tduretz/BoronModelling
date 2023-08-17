@@ -8,35 +8,73 @@ function MakeFigure() # Main function
     printfig = false
 
     # Read data into a dataframe
-    df_Condie10  = reverse(CSV.read("data/CrustGrowthCondieAlster2010.csv", DataFrame))
-    df_Spencer17 = reverse(CSV.read("data/CrustGrowthSpencer2017.csv",      DataFrame))
+    df_Condie10  =  reverse(CSV.read("data/CrustGrowthCondieAlster2010.csv", DataFrame))
+    df_Spencer17 =  reverse(CSV.read("data/CrustGrowthSpencer2017.csv",      DataFrame))
+    df_Kalderon21 = reverse(CSV.read("data/Global_Outgassing_Kalderon.csv",  DataFrame))
 
     # Interpolate data on regular grid
-    t = LinRange(0., 4.5,  1000)
-    itp_Condie10  = linear_interpolation(df_Condie10[:,1],  df_Condie10[:,2],  extrapolation_bc=Line())
-    itp_Spencer17 = linear_interpolation(df_Spencer17[:,1], df_Spencer17[:,2], extrapolation_bc=Line())
+    t = collect(LinRange(0., 4.5,  10000))
+    t_years   = t.*1e9 
+    itp_Condie10  = linear_interpolation(df_Condie10[:,1],  df_Condie10[:,2]./100,  extrapolation_bc=Line())
+    itp_Spencer17 = linear_interpolation(df_Spencer17[:,1], df_Spencer17[:,2]./100, extrapolation_bc=Line())
+    itp_Kalderon21= linear_interpolation(df_Kalderon21[:,1], df_Kalderon21[:,2]./3, extrapolation_bc=Line())
     Condie10      = itp_Condie10.(t)
     Spencer17     = itp_Spencer17.(t)
+    Kalderon21    = itp_Kalderon21.(t)
 
     # Synthetic functions
-    log_type1 = 100.0 .- 60*log.(t .+ 1)
-    erf_type1 = 100.0 .- 100*erf.(t./2)
+    log_type1 = 1.0 .- 0.6*log.(t .+ 1)
+    erf_type1 = 1.0 .- 1*erf.(t./2)
     exp_type1 = 100.0 .- (exp.(t ) .- 1.)
+
+    # Make 6 fluxes out of 4 digitized dataframes
+    # Ocean crust: 1) alteration of oceanic crust, 2) hydrothermal input 3) accretionary prisms, see Lemarchand et al., (2002)
+
+    # Outflux
+    qAlterOcean     = Kalderon21.*27*1e10 # g Boron/y
+    # qCarbonates     = Carbonates.* 6*1e10 # g Boron/y
+    # qCrustSedim     = CrustSedim.*13*1e10 # g Boron/y 
+
+    # Influx
+    qHydroThermal   = Kalderon21.* 4*1e10 # g Boron/y
+    # qAccrePrism     = OceanCrust.* 2*1e10 # g Boron/y
+    qRunOff         = Spencer17.*    38*1e10 # g Boron/y
+
+    # Initial condition
+    Bref = 1.39e24                 # g - modulates the amplitude of the signal, not the shape
+    B0   = 1.0*Bref/1e6           # ppm -> g
+    Δt   = (t_years[2]-t_years[1]) # years
+    nt   = length(t)
+    B    = B0 * ones(nt)           # ppm initial boron concentration
+
+    # Integrate
+    for it=2:nt
+        ∑sources = (qRunOff[it] + qHydroThermal[it]) #+ qAccrePrism[it] )    # g/year # Lemarchand et al., 2002
+        ∑sinks   = (qAlterOcean[it])    #+ qCarbonates[it] + qCrustSedim[it])  # g/year
+        B[it]    = B[it-1] + Δt*( ∑sources - ∑sinks )
+    end
 
     # Figure
     f = Figure(resolution = (1200,600), fontsize=25, aspect = 2.0)
-    ax = Axis(f[1, 1], title = L"$$Palin et al., 2020", xlabel = L"$t$ [Ga]", ylabel = L"$$Continental crust volume [%]",  xreversed = false)
+    ax1 = Axis(f[1, 1], title = L"$$Palin et al., 2020", xlabel = L"$t$ [Ga]", ylabel = L"$$Continental crust volume [%]",  xreversed = false)
     # Sampled data
-    scatter!(ax, df_Condie10[:,1],  df_Condie10[:,2],  marker=:circle, label="Condie10 raw" )
-    scatter!(ax, df_Spencer17[:,1], df_Spencer17[:,2], marker=:circle, label="Spencer17 raw")
+    scatter!(ax1, df_Condie10[:,1],  df_Condie10[:,2]./100,  marker=:circle, label="Condie10 raw" )
+    scatter!(ax1, df_Spencer17[:,1], df_Spencer17[:,2]./100, marker=:circle, label="Spencer17 raw")
+    scatter!(ax1, df_Kalderon21[:,1], df_Kalderon21[:,2]./3, marker=:circle, label="Kalderon21 raw")
     # Interpolated data
-    lines!(ax, t, Condie10, label="Condie10" )
-    lines!(ax, t, Spencer17, label="Spencer17")
+    lines!(ax1, t, Condie10, label="Condie10" )
+    lines!(ax1, t, Spencer17, label="Spencer17")
+    lines!(ax1, t, Kalderon21, label="Kalderon21")
     # Synthetic data
-    lines!(ax, t, log_type1, label="log" )
-    lines!(ax, t, erf_type1, label="erf" )
-    lines!(ax, t, exp_type1, label="exp" )
-    f[1, 2] = Legend(f, ax, "Legend", framevisible = false)
+    lines!(ax1, t, log_type1, label="log" )
+    lines!(ax1, t, erf_type1, label="erf" )
+    # lines!(ax, t, exp_type1, label="exp" )
+    f[1, 2] = Legend(f, ax1, "Legend", framevisible = false)
+
+    ax2 = Axis(f[2, 1], title = L"$$Boron concentration", xlabel = L"$t$ [Ga]", ylabel = L"$$B [ppm]",  xreversed = false, xgridvisible = true, ygridvisible = false)
+    lines!(ax2, t, B./(Bref/1e6), label="Boron concentration" )
+    # ylims!(ax2, 3.0, 6.0)
+
     # Display figure
     if printfig
         save("figures/ContinentalCrustPalin20.png", f, px_per_unit = 300)
