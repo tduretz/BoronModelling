@@ -1,11 +1,11 @@
-using CSV, DataFrames, GLMakie, Interpolations, SpecialFunctions
+using CSV, DataFrames, GLMakie, Interpolations, SpecialFunctions, CairoMakie
 Makie.inline!(false)
 
 #---------------------------------------------------------#
 
 function MakeFigure() # Main function
 
-    printfig = false
+    printfig = true
 
     # Read data into a dataframe
     df_Condie10   =  reverse(CSV.read("data/CrustGrowthCondieAlster2010.csv", DataFrame))
@@ -26,7 +26,7 @@ function MakeFigure() # Main function
     Kalderon21    = itp_Kalderon21.(t)
     Palin20       = itp_Palin20.(t)
     ConstFlux     = ones(length(t))
-    LinDecay      = LinRange(0.933, 0.933, length(t))
+    LinDecay      = LinRange(1.042, 1.042, length(t))
 
     # Synthetic functions
     log_type1 = 1.0 .- 0.6*log.(t .+ 1)
@@ -38,13 +38,13 @@ function MakeFigure() # Main function
 
     # Outflux
     qAlterOcean     =  LinDecay.*27*1e10 # g Boron/y
-    qCarbonates     = ConstFlux.* 6*1e10 # g Boron/y
-    qCrustSedim     = Palin20.*13*1e10 # g Boron/y 
+    # qCarbonates     = ConstFlux.* 6*1e10 # g Boron/y
+    qCrustSedim     = Spencer17.*13*1e10 # g Boron/y 
 
     # Influx
     qHydroThermal   =  Kalderon21.* 4*1e10 # g Boron/y
     # qAccrePrism     = OceanCrust.* 2*1e10 # g Boron/y
-    qRunOff         = Palin20.*    38*1e10 # g Boron/y
+    qRunOff         = Spencer17.*    38*1e10 # g Boron/y
 
     # Initial condition
     Bref = 1.39e24                 # g - modulates the amplitude of the signal, not the shape
@@ -87,7 +87,7 @@ function MakeFigure() # Main function
 
     # Display figure
     if printfig
-        save("figures/ContinentalCrustPalin20.png", f, px_per_unit = 300)
+        save("figures/ContinentalCrustPalin20.eps", f, px_per_unit = 300)
     else
         DataInspector(f)
         display(f)
