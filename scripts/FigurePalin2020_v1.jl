@@ -1,11 +1,11 @@
-using CSV, DataFrames, GLMakie, Interpolations, SpecialFunctions, CairoMakie
+using CSV, DataFrames, GLMakie, Interpolations, SpecialFunctions
 Makie.inline!(false)
 
 #---------------------------------------------------------#
 
 function MakeFigure() # Main function
 
-    printfig = true
+    printfig = false
 
     # Read data into a dataframe
     df_Condie10   =  reverse(CSV.read("data/CrustGrowthCondieAlster2010.csv", DataFrame))
@@ -64,21 +64,21 @@ function MakeFigure() # Main function
     f = Figure(resolution = (1200,600), fontsize=25, aspect = 2.0)
     ax1 = Axis(f[1, 1], title = L"$$Palin et al., 2020", xlabel = L"$t$ [Ga]", ylabel = L"$$Continental crust volume [%]",  xreversed = false)
     # Sampled data
-    scatter!(ax1, df_Condie10[:,1],  df_Condie10[:,2]./100,  marker=:circle, label="Condie10 raw" )
-    scatter!(ax1, df_Spencer17[:,1], df_Spencer17[:,2]./100, marker=:circle, label="Spencer17 raw")
+    # scatter!(ax1, df_Condie10[:,1],  df_Condie10[:,2]./100,  marker=:circle, label="Condie10 raw" )
+    # scatter!(ax1, df_Spencer17[:,1], df_Spencer17[:,2]./100, marker=:circle, label="Spencer17 raw")
     # scatter!(ax1, df_Kalderon21[:,1], df_Kalderon21[:,2]./2.3, marker=:circle, label="Kalderon21 raw")
     
     # Interpolated data
     lines!(ax1, t, Condie10,    label="Condie10" )
     lines!(ax1, t, Spencer17,   label="Spencer17")
-    lines!(ax1, t, LinDecay,    label="LinDecay")
+    # lines!(ax1, t, LinDecay,    label="LinDecay")
     lines!(ax1, t, Palin20,     label="Palin20")
     # lines!(ax1, t, Kalderon21, label="Kalderon21")
 
     # Synthetic data
-    lines!(ax1, t, log_type1, label="log" )
-    lines!(ax1, t, erf_type1, label="erf" )
-    lines!(ax1, t, exp_type1, label="exp" )
+    # lines!(ax1, t, log_type1, label="log" )
+    # lines!(ax1, t, erf_type1, label="erf" )
+    # lines!(ax1, t, exp_type1, label="exp" )
     f[1, 2] = Legend(f, ax1, "Legend", framevisible = false)
 
     ax2 = Axis(f[2, 1], title = L"$$Boron concentration", xlabel = L"$t$ [Ga]", ylabel = L"$$B [ppm]",  xreversed = false, xgridvisible = true, ygridvisible = false)
