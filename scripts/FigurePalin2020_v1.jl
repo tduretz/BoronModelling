@@ -1,11 +1,11 @@
-using CSV, DataFrames, CairoMakie, Interpolations, SpecialFunctions
+using CSV, DataFrames, GLMakie, Interpolations, SpecialFunctions
 Makie.inline!(false)
 
 #---------------------------------------------------------#
 
 function MakeFigure() # Main function
 
-    printfig = true
+    printfig = false
 
     # Read data into a dataframe
     df_Condie10   =  reverse(CSV.read("data/CrustGrowthCondieAlster2010.csv", DataFrame))
@@ -26,7 +26,7 @@ function MakeFigure() # Main function
     Kalderon21    = itp_Kalderon21.(t)
     Palin20       = itp_Palin20.(t)
     ConstFlux     = ones(length(t))
-    LinDecay      = LinRange(1, 1, length(t))
+    LinDecay      = LinRange(1.0, 1.0, length(t))
 
     # Synthetic functions
     log_type1 = 1.0 .- 0.6*log.(t .+ 1)
