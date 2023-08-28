@@ -87,7 +87,7 @@ function MakeFigure() # Main function
 
     # Display figure
     if printfig
-        save("figures/ContinentalCrustPalin20_v1.pdf", f, pt_per_unit = 1)
+        save("figures/ContinentalCrustPalin20_v1.png", f, pt_per_unit = 1)
     else
         DataInspector(f)
         display(f)
