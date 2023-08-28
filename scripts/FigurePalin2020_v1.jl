@@ -1,11 +1,11 @@
-using CSV, DataFrames, GLMakie, Interpolations, SpecialFunctions
+using CSV, DataFrames, CairoMakie, Interpolations, SpecialFunctions
 Makie.inline!(false)
 
 #---------------------------------------------------------#
 
 function MakeFigure() # Main function
 
-    printfig = false
+    printfig = true
 
     # Read data into a dataframe
     df_Condie10   =  reverse(CSV.read("data/CrustGrowthCondieAlster2010.csv", DataFrame))
@@ -26,7 +26,7 @@ function MakeFigure() # Main function
     Kalderon21    = itp_Kalderon21.(t)
     Palin20       = itp_Palin20.(t)
     ConstFlux     = ones(length(t))
-    LinDecay      = LinRange(1.042, 1.042, length(t))
+    LinDecay      = LinRange(0.933, 0.933, length(t))
 
     # Synthetic functions
     log_type1 = 1.0 .- 0.6*log.(t .+ 1)
@@ -39,12 +39,12 @@ function MakeFigure() # Main function
     # Outflux
     qAlterOcean     =  LinDecay.*27*1e10 # g Boron/y
     # qCarbonates     = ConstFlux.* 6*1e10 # g Boron/y
-    qCrustSedim     = Spencer17.*13*1e10 # g Boron/y 
+    qCrustSedim     = Palin20.*13*1e10 # g Boron/y 
 
     # Influx
     qHydroThermal   =  Kalderon21.* 4*1e10 # g Boron/y
     # qAccrePrism     = OceanCrust.* 2*1e10 # g Boron/y
-    qRunOff         = Spencer17.*    38*1e10 # g Boron/y
+    qRunOff         = Palin20.*    38*1e10 # g Boron/y
 
     # Initial condition
     Bref = 1.39e24                 # g - modulates the amplitude of the signal, not the shape
@@ -62,7 +62,7 @@ function MakeFigure() # Main function
 
     # Figure
     f = Figure(resolution = (1200,600), fontsize=25, aspect = 2.0)
-    ax1 = Axis(f[1, 1], title = L"$$Palin et al., 2020", xlabel = L"$t$ [Ga]", ylabel = L"$$Continental crust volume [%]",  xreversed = false)
+    ax1 = Axis(f[1, 1], title = L"$$Palin et al., 2020", xlabel = L"$t$ [Ga]", ylabel = L"$$Flux magnitude/Modern value",  xreversed = false)
     # Sampled data
     # scatter!(ax1, df_Condie10[:,1],  df_Condie10[:,2]./100,  marker=:circle, label="Condie10 raw" )
     # scatter!(ax1, df_Spencer17[:,1], df_Spencer17[:,2]./100, marker=:circle, label="Spencer17 raw")
@@ -71,7 +71,7 @@ function MakeFigure() # Main function
     # Interpolated data
     lines!(ax1, t, Condie10,    label="Condie10" )
     lines!(ax1, t, Spencer17,   label="Spencer17")
-    # lines!(ax1, t, LinDecay,    label="LinDecay")
+    lines!(ax1, t, LinDecay,    label="LinDecay")
     lines!(ax1, t, Palin20,     label="Palin20")
     # lines!(ax1, t, Kalderon21, label="Kalderon21")
 
@@ -82,12 +82,12 @@ function MakeFigure() # Main function
     f[1, 2] = Legend(f, ax1, "Legend", framevisible = false)
 
     ax2 = Axis(f[2, 1], title = L"$$Boron concentration", xlabel = L"$t$ [Ga]", ylabel = L"$$B [ppm]",  xreversed = false, xgridvisible = true, ygridvisible = false)
-    lines!(ax2, t, B./(Bref/1e6), label="Boron concentration" )
+    lines!(ax2, t, B./(Bref/1e6), label="Modelled oceanic Boron concentration" )
     # ylims!(ax2, 3.0, 6.0)
 
     # Display figure
     if printfig
-        save("figures/ContinentalCrustPalin20.eps", f, px_per_unit = 300)
+        save("figures/ContinentalCrustPalin20_v1.pdf", f, pt_per_unit = 1)
     else
         DataInspector(f)
         display(f)
