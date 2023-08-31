@@ -16,10 +16,10 @@ function MakeFigure() # Main function
     # Interpolate data on regular grid
     t = collect(LinRange(4.0, 0.0,  1000))
     t_years   = t.*1e9 
-    itp_Condie10  = linear_interpolation(df_Condie10[:,1],  df_Condie10[:,2]./100,  extrapolation_bc=Line())
-    itp_Spencer17 = linear_interpolation(df_Spencer17[:,1], df_Spencer17[:,2]./100, extrapolation_bc=Line())
-    itp_Kalderon21= linear_interpolation(df_Kalderon21[:,1], df_Kalderon21[:,2],    extrapolation_bc=Line())
-    itp_Palin20   = linear_interpolation(df_Palin20[:,1], df_Palin20[:,2],          extrapolation_bc=Line())
+    itp_Condie10  = linear_interpolation(df_Condie10[:,1],   df_Condie10[:,2]./100,  extrapolation_bc=Line())
+    itp_Spencer17 = linear_interpolation(df_Spencer17[:,1],  df_Spencer17[:,2]./100, extrapolation_bc=Line())
+    itp_Kalderon21= linear_interpolation(df_Kalderon21[:,1], df_Kalderon21[:,2],     extrapolation_bc=Line())
+    itp_Palin20   = linear_interpolation(df_Palin20[:,1],    df_Palin20[:,2],        extrapolation_bc=Line())
 
     Condie10      = itp_Condie10.(t)
     Spencer17     = itp_Spencer17.(t)
